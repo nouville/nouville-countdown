@@ -4,6 +4,25 @@
   <meta charset="utf-8">
   <title>Countdown & Minigame zur Nikkah</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Firebase App (core) SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <!-- Firestore SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Deine Firebase‑Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTghr8BJMbjg7wRAkB83G6KRONfz-qP7s",
+      authDomain: "nouville-countdown.firebaseapp.com",
+      projectId: "nouville-countdown",
+      storageBucket: "nouville-countdown.firebasestorage.app",
+      messagingSenderId: "78316229145",
+      appId: "1:78316229145:web:d50f99524c04bd43f9d088"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
   <style>
     /* Reset & Basis */
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -17,10 +36,10 @@
       padding: 2rem 1rem;
     }
 
-    /* Zentraler Container, begrenzt die Breite */
+    /* Zentraler Container */
     .container {
       width: 100%;
-      max-width: 420px;
+      max-width: 800px;
     }
 
     /* Countdown-Box */
@@ -52,11 +71,31 @@
       color: #666;
     }
 
-    /* Game-Section */
+    /* Spiel- und Scoreboard-Bereich */
+    .playground {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
     .game-section {
+      flex: 1 1 300px;
       text-align: center;
     }
-    .score {
+    .scoreboard {
+      flex: 1 1 200px;
+      background: #fff;
+      border: 2px solid #80b380;
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .scoreboard h2 {
+      margin-bottom: 0.5rem;
+      color: #006600;
+    }
+    .game-section .score {
       font-size: 1.25rem;
       color: #004400;
       margin-bottom: 0.5rem;
@@ -64,11 +103,12 @@
     .game-area {
       position: relative;
       width: 100%;
-      padding-top: 75%; /* Seitenverhältnis 4:3 */
+      padding-top: 75%; /* 4:3 ratio */
       background: #fff;
       border: 2px solid #80b380;
       border-radius: 1rem;
       overflow: hidden;
+      margin-bottom: 1rem;
     }
     .heart {
       position: absolute;
@@ -81,21 +121,60 @@
       0%, 90% { opacity: 1; }
       100%   { opacity: 0; }
     }
+    /* Name-Form */
+    #nameForm {
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    #nameForm input {
+      padding: 0.5rem;
+      border: 1px solid #80b380;
+      border-radius: 0.5rem;
+      width: 80%;
+    }
+    #nameForm button {
+      padding: 0.5rem 1rem;
+      background: #006600;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <!-- Countdown oben in der Card -->
+
+    <!-- Countdown -->
     <div class="countdown">
       <h1>Noch bis zu unserer Nikkah</h1>
       <div id="timer">– T –:–:–</div>
       <div class="label">02. August 2025 · 12:00 Uhr</div>
     </div>
 
-    <!-- Minigame darunter -->
-    <div class="game-section">
-      <div class="score">Punkte: <span id="score">0</span></div>
-      <div class="game-area" id="gameArea"></div>
+    <!-- Spiel & Scoreboard -->
+    <div class="playground">
+
+      <!-- Minigame -->
+      <div class="game-section">
+        <div class="score">Punkte: <span id="score">0</span></div>
+        <div class="game-area" id="gameArea"></div>
+        <div id="nameForm">
+          <div>Spiel vorbei! Gib deinen Namen ein:</div>
+          <input type="text" id="nameInput" placeholder="Dein Name">
+          <button id="submitBtn">Absenden</button>
+        </div>
+      </div>
+
+      <!-- Top 10 Scoreboard -->
+      <div class="scoreboard">
+        <h2>Top 10</h2>
+        <div id="top10">Lade...</div>
+      </div>
+
     </div>
   </div>
 
@@ -122,26 +201,93 @@
     updateCountdown();
     const cntInterval = setInterval(updateCountdown, 1000);
 
-    // === Herz-Fangen Minigame ===
-    const gameArea = document.getElementById("gameArea"),
-          scoreEl = document.getElementById("score");
+    // === Minigame Logik ===
+    const gameArea = document.getElementById("gameArea");
+    const scoreEl = document.getElementById("score");
+    const nameForm = document.getElementById("nameForm");
+    const nameInput = document.getElementById("nameInput");
+    const submitBtn = document.getElementById("submitBtn");
     let score = 0;
-    function spawnHeart() {
-      const heart = document.createElement("div");
-      heart.className = "heart";
-      heart.textContent = "❤️";
-      // Berechne position innerhalb der Box
-      const w = gameArea.clientWidth, h = gameArea.clientHeight;
-      heart.style.left = Math.random()*(w-40)+"px";
-      heart.style.top  = Math.random()*(h-40)+"px";
-      gameArea.appendChild(heart);
-      heart.addEventListener("click", ()=>{
-        score++; scoreEl.textContent = score;
-        heart.remove();
-      });
-      setTimeout(()=>heart.remove(), 1000);
+    let startTime = Date.now();
+    let gameOver = false;
+
+    function getHeartCount() {
+      const elapsed = (Date.now() - startTime) / 60000; // in Minuten
+      const byScore = Math.floor(score / 30);
+      const byTime  = Math.floor(elapsed * 6);
+      return Math.min(1 + byScore + byTime, 7);
     }
-    setInterval(spawnHeart, 1200);
+
+    function spawnWave() {
+      if (gameOver) return;
+      const count = getHeartCount();
+      let pending = count;
+      for (let i = 0; i < count; i++) {
+        const heart = document.createElement("div");
+        heart.className = "heart";
+        heart.textContent = "❤️";
+        const w = gameArea.clientWidth, h = gameArea.clientHeight;
+        heart.style.left = Math.random()*(w-40)+"px";
+        heart.style.top  = Math.random()*(h-40)+"px";
+        gameArea.appendChild(heart);
+        heart.addEventListener("click", () => {
+          score++;
+          scoreEl.textContent = score;
+          heart.remove();
+          pending--;
+          if (pending === 0) {
+            spawnWave();
+          }
+        });
+        setTimeout(() => {
+          if (heart.parentNode) {
+            heart.remove();
+            pending--;
+            if (pending === 0) spawnWave();
+          }
+        }, 1000);
+      }
+    }
+
+    // Spielende nach 60 Sekunden
+    setTimeout(() => {
+      gameOver = true;
+      // alle Herzen entfernen
+      document.querySelectorAll(".heart").forEach(h => h.remove());
+      // Formular anzeigen
+      nameForm.style.display = "flex";
+    }, 60000);
+
+    // Start erster Wave
+    spawnWave();
+
+    // === Score Submission & Top10 ===
+    async function submitScore(name, score) {
+      await db.collection("scores").add({
+        name,
+        score,
+        ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    async function loadTop10() {
+      const snapshot = await db.collection("scores")
+        .orderBy("score", "desc")
+        .limit(10)
+        .get();
+      const list = snapshot.docs.map(d => d.data());
+      document.getElementById("top10").innerHTML =
+        list.map((d,i) => `<div>${i+1}. ${d.name}: ${d.score}</div>`).join("");
+    }
+
+    submitBtn.addEventListener("click", async () => {
+      const name = nameInput.value.trim() || "Anonym";
+      submitBtn.disabled = true;
+      await submitScore(name, score);
+      await loadTop10();
+    });
+
+    // Lade anfänglich die Top10 (falls schon Scores da sind)
+    loadTop10();
   </script>
 </body>
 </html>
