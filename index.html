@@ -95,15 +95,15 @@
       margin-bottom: 0.5rem;
       color: #006600;
     }
-    .game-section .score {
-      font-size: 1.25rem;
-      color: #004400;
-      margin-bottom: 0.5rem;
-    }
     .game-section .round-timer {
       font-size: 1rem;
       color: #006600;
       margin-bottom: 0.75rem;
+    }
+    .game-section .score {
+      font-size: 1.25rem;
+      color: #004400;
+      margin-bottom: 0.5rem;
     }
     .game-area {
       position: relative;
@@ -126,7 +126,8 @@
       0%, 90% { opacity: 1; }
       100%   { opacity: 0; }
     }
-    /* Name-Form */
+
+    /* Name-Form & Disclaimer */
     #nameForm {
       display: none;
       flex-direction: column;
@@ -146,6 +147,12 @@
       border: none;
       border-radius: 0.5rem;
       cursor: pointer;
+    }
+    .disclaimer {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.5rem;
+      text-align: center;
     }
   </style>
 </head>
@@ -172,6 +179,11 @@
           <div>Spiel vorbei! Gib deinen Namen ein:</div>
           <input type="text" id="nameInput" placeholder="Dein Name">
           <button id="submitBtn">Absenden</button>
+          <p class="disclaimer">
+            Mit Absenden erklärst du dich einverstanden, dass dein Name, dein Score<br>
+            sowie Browser‑ und Geräteinformationen (IP, OS, Sprache, Auflösung) für<br>
+            nicht-kommerzielle Zwecke bis zu 90 Tage gespeichert werden.
+          </p>
         </div>
       </div>
 
@@ -208,40 +220,49 @@
     const cntInterval = setInterval(updateCountdown, 1000);
 
     // === Minigame Logik ===
-    const gameArea    = document.getElementById("gameArea");
-    const scoreEl     = document.getElementById("score");
-    const roundTimerEl= document.getElementById("roundTimer");
-    const nameForm    = document.getElementById("nameForm");
-    const nameInput   = document.getElementById("nameInput");
-    const submitBtn   = document.getElementById("submitBtn");
+    const gameArea     = document.getElementById("gameArea");
+    const scoreEl      = document.getElementById("score");
+    const roundTimerEl = document.getElementById("roundTimer");
+    const nameForm     = document.getElementById("nameForm");
+    const nameInput    = document.getElementById("nameInput");
+    const submitBtn    = document.getElementById("submitBtn");
 
-    let score       = 0;
-    let startTime   = Date.now();
-    let gameOver    = false;
-    const ROUND_MS  = 50000;          // 50 Sekunden
-    const HEART_LIFE= 1200;           // 1.2 Sekunden
-    const MAX_HEARTS= 5;
+    let score     = 0;
+    let startTime = Date.now();
+    let gameOver  = false;
+    const ROUND_MS   = 50000;  // 50 Sekunden
+    const HEART_LIFE = 1200;   // 1.2 Sekunden
+    const MAX_HEARTS = 5;
 
-    // Aktualisiere verbleibende Zeit jede Sekunde
+    // Update Rundentimer
     function updateRoundTimer() {
       const elapsed = Date.now() - startTime;
-      const left = Math.max(0, Math.ceil((ROUND_MS - elapsed)/1000));
+      const left    = Math.max(0, Math.ceil((ROUND_MS - elapsed)/1000));
       roundTimerEl.textContent = left;
       if (!gameOver) setTimeout(updateRoundTimer, 250);
     }
 
+    function getClientInfo() {
+      return {
+        userAgent: navigator.userAgent,
+        platform:  navigator.platform,
+        language:  navigator.language,
+        screen:    `${screen.width}x${screen.height}`
+      };
+    }
+
     function getHeartCount() {
       const elapsedMin = (Date.now() - startTime)/60000;
-      const byScore = Math.floor(score/30);
-      const byTime  = Math.floor(elapsedMin*6);
+      const byScore    = Math.floor(score/30);
+      const byTime     = Math.floor(elapsedMin*6);
       return Math.min(1 + byScore + byTime, MAX_HEARTS);
     }
 
     function spawnWave() {
       if (gameOver) return;
-      const count = getHeartCount();
-      let pending = count;
-      for (let i = 0; i < count; i++) {
+      const count   = getHeartCount();
+      let pending   = count;
+      for (let i=0; i<count; i++) {
         const heart = document.createElement("div");
         heart.className = "heart";
         heart.textContent = "❤️";
@@ -275,17 +296,13 @@
       nameForm.style.display = "flex";
     }, ROUND_MS);
 
-    // Starte Timer & erste Welle
+    // Start
     updateRoundTimer();
     spawnWave();
 
     // === Score Submission & Top10 ===
-    async function submitScore(name, score) {
-      await db.collection("scores").add({
-        name,
-        score,
-        ts: firebase.firestore.FieldValue.serverTimestamp()
-      });
+    async function submitScore(data) {
+      await db.collection("scores").add(data);
     }
     async function loadTop10() {
       const snapshot = await db.collection("scores")
@@ -298,13 +315,26 @@
     }
 
     submitBtn.addEventListener("click", async () => {
-      const name = nameInput.value.trim() || "Anonym";
       submitBtn.disabled = true;
-      await submitScore(name, score);
+      // Sammle Client‑Infos
+      const info = getClientInfo();
+      // Hole IP & Geo
+      const geo = await fetch("https://ipapi.co/json").then(r=>r.json()).catch(()=>({}));
+      const data = {
+        name: nameInput.value.trim() || "Anonym",
+        score,
+        info,
+        ip:      geo.ip,
+        country: geo.country,
+        region:  geo.region,
+        city:    geo.city,
+        ts:      firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await submitScore(data);
       await loadTop10();
     });
 
-    // Lade anfänglich die Top10
+    // Lade anfänglich Top10
     loadTop10();
   </script>
 </body>
