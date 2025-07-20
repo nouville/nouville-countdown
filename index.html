@@ -2,101 +2,140 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>Countdown zu unserer Nikkah</title>
+  <title>Countdown & Minigame zur Nikkah</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Reset & Basisstyling */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f3f9f3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill-opacity="0.05"><circle cx="20" cy="20" r="20" fill="%23008000"/></svg>') center;
+      flex-direction: column;
+      font-family: system-ui, sans-serif;
+      background: #f3f9f3;
       color: #1a1a1a;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      text-align: center;
-      padding: 1rem;
     }
 
-    /* Countdown-Box */
-    .countdown {
+    /* 1) Countdown im oberen Drittel */
+    .top {
+      flex: 0 0 33vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border-bottom: 2px solid #80b380;
+    }
+    #timer {
+      font-size: clamp(2rem, 8vw, 4rem);
+      color: #006600;
+      letter-spacing: 0.05em;
+    }
+
+    /* 2) Minigame-Bereich */
+    .game-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      padding-top: 1rem;
+    }
+    .score {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #004400;
+    }
+    .game-area {
+      position: relative;
+      width: 90vw;
+      max-width: 400px;
+      height: 300px;
       background: #fff;
       border: 2px solid #80b380;
       border-radius: 1rem;
-      padding: 2rem;
-      max-width: 360px;
-      width: 100%;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
     }
-    h1 {
-      font-size: 1.75rem;
-      margin-bottom: 1rem;
-      color: #006600;
-      font-weight: 500;
+    .heart {
+      position: absolute;
+      font-size: 2.5rem;
+      cursor: pointer;
+      user-select: none;
+      animation: fadeOut 1s forwards;
     }
-
-    /* Hier kommt die Anpassung: Font-Size skaliert automatisch und umbricht bei Bedarf */
-    #timer {
-      font-size: clamp(2rem, 8vw, 3.5rem);
-      line-height: 1.1;
-      color: #004400;
-      margin-bottom: 0.5rem;
-      /* Erlaubt Umbruch an normalen Leerzeichen */
-      white-space: normal;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
-    }
-
-    .label {
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    @media (min-width: 600px) {
-      .countdown { padding: 3rem; }
-      h1 { font-size: 2rem; }
-      /* Auf großen Bildschirmen darf’s gern etwas größer sein */
-      #timer { font-size: 4rem; }
+    @keyframes fadeOut {
+      0%   { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { opacity: 0; }
     }
   </style>
 </head>
 <body>
-  <div class="countdown">
-    <h1>Noch bis zu unserer Nikkah</h1>
-    <!-- Normale Leerzeichen statt &nbsp; -->
-    <div id="timer">12 T 20:06:12</div>
-    <div class="label">02. August 2025 · 12:00 Uhr</div>
+
+  <!-- Countdown -->
+  <div class="top">
+    <div id="timer">– T –:–:–</div>
+  </div>
+
+  <!-- Minigame -->
+  <div class="game-section">
+    <div class="score">Punkte: <span id="score">0</span></div>
+    <div class="game-area" id="gameArea"></div>
   </div>
 
   <script>
+    // === Countdown ===
     const target = new Date("2025-08-02T12:00:00+02:00");
     const out = document.getElementById("timer");
 
     function updateCountdown() {
-      const now = new Date();
-      let diff = target - now;
-
+      const diff = target - Date.now();
       if (diff <= 0) {
-        out.textContent = "Das Fest hat begonnen 🎉";
-        clearInterval(interval);
+        out.textContent = "Das Fest hat begonnen 🎉";
+        clearInterval(cntInterval);
         return;
       }
+      const d = Math.floor(diff / 86400000);
+      let rem = diff % 86400000;
+      const h = String(Math.floor(rem / 3600000)).padStart(2, "0");
+      rem %= 3600000;
+      const m = String(Math.floor(rem / 60000)).padStart(2, "0");
+      rem %= 60000;
+      const s = String(Math.floor(rem / 1000)).padStart(2, "0");
+      out.textContent = `${d} T ${h}:${m}:${s}`;
+    }
+    const cntInterval = setInterval(updateCountdown, 1000);
+    updateCountdown();
 
-      const days = Math.floor(diff / 86400000);
-      diff %= 86400000;
-      const hours = String(Math.floor(diff / 3600000)).padStart(2, "0");
-      diff %= 3600000;
-      const mins = String(Math.floor(diff / 60000)).padStart(2, "0");
-      diff %= 60000;
-      const secs = String(Math.floor(diff / 1000)).padStart(2, "0");
+    // === Herz-Fangen Minigame ===
+    const gameArea = document.getElementById("gameArea");
+    const scoreEl = document.getElementById("score");
+    let score = 0;
 
-      // Normale spaces, damit bei langen Zahlen umgebrochen werden kann
-      out.textContent = `${days} T ${hours}:${mins}:${secs}`;
+    function spawnHeart() {
+      const heart = document.createElement("div");
+      heart.className = "heart";
+      heart.textContent = "❤️";
+      // zufällige Position
+      const maxX = gameArea.clientWidth  - 40;
+      const maxY = gameArea.clientHeight - 40;
+      heart.style.left = Math.random() * maxX + "px";
+      heart.style.top  = Math.random() * maxY + "px";
+      gameArea.appendChild(heart);
+
+      // Klick-Handler
+      heart.addEventListener("click", () => {
+        score++;
+        scoreEl.textContent = score;
+        heart.remove();
+      });
+
+      // Entfernen, wenn nicht schnell genug geklickt
+      setTimeout(() => {
+        if (heart.parentNode) heart.remove();
+      }, 1000);
     }
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    // Alle 1.2 Sek ein Herz spawnen
+    setInterval(spawnHeart, 1200);
   </script>
 </body>
 </html>
