@@ -5,33 +5,50 @@
   <title>Countdown zu unserer Nikkah</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Reset & Basis */
+    /* Reset & Basisstyling */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fafafa;
-      color: #333;
-      font-family: system-ui, sans-serif;
+      background: #f3f9f3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill-opacity="0.05"><circle cx="20" cy="20" r="20" fill="%23008000"/></svg>') center;
+      color: #1a1a1a;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
       text-align: center;
+      padding: 1rem;
     }
-    /* Container */
+
+    /* Countdown-Box */
     .countdown {
-      max-width: 90%;
+      background: #fff;
+      border: 2px solid #80b380;
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
     h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5em;
-      font-weight: 400;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+      color: #006600;
+      font-weight: 500;
     }
     #timer {
       font-size: 3rem;
       letter-spacing: 0.05em;
+      color: #004400;
+      margin-bottom: 0.5rem;
     }
+    .label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
     @media (min-width: 600px) {
-      h1 { font-size: 2.5rem; }
+      .countdown { padding: 3rem; }
+      h1 { font-size: 2rem; }
       #timer { font-size: 4rem; }
     }
   </style>
@@ -40,10 +57,11 @@
   <div class="countdown">
     <h1>Noch bis zu unserer Nikkah</h1>
     <div id="timer">– Tage –:–:–</div>
+    <div class="label">02. August 2025 · 12:00 Uhr</div>
   </div>
 
   <script>
-    // Zielzeit: 02.08.2025 12:00 Uhr CEST (UTC+2)
+    // Zielzeit: 02.08.2025, 12:00 Uhr CEST (UTC+2)
     const target = new Date("2025-08-02T12:00:00+02:00");
     const out = document.getElementById("timer");
 
@@ -65,10 +83,9 @@
       diff %= 60000;
       const secs = String(Math.floor(diff / 1000)).padStart(2, "0");
 
-      out.textContent = `${days} T ${hours}:${mins}:${secs}`;
+      out.textContent = `${days} T ${hours}:${mins}:${secs}`;
     }
 
-    // Erstaufruf + Intervall alle 1 Sekunde
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
   </script>
