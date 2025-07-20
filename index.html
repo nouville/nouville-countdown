@@ -10,7 +10,7 @@
   <!-- Firestore SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
-    // Deine Firebase‑Config
+    // Firebase‑Config
     const firebaseConfig = {
       apiKey: "AIzaSyDTghr8BJMbjg7wRAkB83G6KRONfz-qP7s",
       authDomain: "nouville-countdown.firebaseapp.com",
@@ -24,180 +24,114 @@
   </script>
 
   <style>
-    /* Reset & Basis */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; }
+    * { margin:0; padding:0; box-sizing:border-box }
+    html, body { height:100% }
     body {
       background: #f3f9f3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill-opacity="0.05"><circle cx="20" cy="20" r="20" fill="%23008000"/></svg>') center;
       font-family: system-ui, sans-serif;
       color: #1a1a1a;
-      display: flex;
-      justify-content: center;
-      padding: 2rem 1rem;
+      display: flex; justify-content: center; padding:2rem 1rem;
     }
+    .container { width:100%; max-width:800px }
 
-    /* Zentraler Container */
-    .container {
-      width: 100%;
-      max-width: 800px;
-    }
-
-    /* Countdown-Box */
     .countdown {
-      background: #fff;
-      border: 2px solid #80b380;
-      border-radius: 1rem;
-      padding: 1.5rem 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      text-align: center;
-      margin-bottom: 2rem;
+      background:#fff; border:2px solid #80b380; border-radius:1rem;
+      padding:1.5rem 1rem; box-shadow:0 4px 12px rgba(0,0,0,0.08);
+      text-align:center; margin-bottom:2rem;
     }
-    .countdown h1 {
-      font-size: 1.6rem;
-      color: #006600;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
+    .countdown h1 { font-size:1.6rem; color:#006600; margin-bottom:0.5rem; font-weight:500 }
     #timer {
-      font-size: clamp(2rem, 8vw, 3rem);
-      color: #004400;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.25rem;
-      white-space: normal;
-      overflow-wrap: break-word;
+      font-size:clamp(2rem,8vw,3rem); color:#004400; letter-spacing:0.05em;
+      margin-bottom:0.25rem; white-space:normal; overflow-wrap:break-word;
     }
-    .countdown .label {
-      font-size: 0.85rem;
-      color: #666;
-    }
+    .countdown .label { font-size:0.85rem; color:#666 }
 
-    /* Spiel- und Scoreboard-Bereich */
-    .playground {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .game-section {
-      flex: 1 1 300px;
-      text-align: center;
-    }
+    .playground { display:flex; flex-wrap:wrap; gap:1rem }
+    .game-section { flex:1 1 300px; text-align:center }
     .scoreboard {
-      flex: 1 1 200px;
-      background: #fff;
-      border: 2px solid #80b380;
-      border-radius: 1rem;
-      padding: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      max-height: 400px;
-      overflow-y: auto;
+      flex:1 1 200px; background:#fff; border:2px solid #80b380;
+      border-radius:1rem; padding:1rem; box-shadow:0 4px 12px rgba(0,0,0,0.08);
+      max-height:400px; overflow-y:auto;
     }
-    .scoreboard h2 {
-      margin-bottom: 0.5rem;
-      color: #006600;
-    }
-    .game-section .round-timer {
-      font-size: 1rem;
-      color: #006600;
-      margin-bottom: 0.75rem;
-    }
-    .game-section .score {
-      font-size: 1.25rem;
-      color: #004400;
-      margin-bottom: 0.5rem;
-    }
+    .scoreboard h2 { margin-bottom:0.5rem; color:#006600 }
+    .scoreboard p.prize { margin-top:1rem; font-size:0.9rem; color:#006600; text-align:center }
+
+    .game-section .round-timer { font-size:1rem; color:#006600; margin-bottom:0.75rem }
+    .game-section .score { font-size:1.25rem; color:#004400; margin-bottom:0.5rem }
     .game-area {
-      position: relative;
-      width: 100%;
-      padding-top: 75%; /* 4:3 ratio */
-      background: #fff;
-      border: 2px solid #80b380;
-      border-radius: 1rem;
-      overflow: hidden;
-      margin-bottom: 1rem;
+      position:relative; width:100%; padding-top:75%; background:#fff;
+      border:2px solid #80b380; border-radius:1rem; overflow:hidden; margin-bottom:1rem;
     }
     .heart {
-      position: absolute;
-      font-size: 2.5rem;
-      cursor: pointer;
-      user-select: none;
-      animation: fadeOut 1.2s forwards;
+      position:absolute; font-size:2.5rem; cursor:pointer; user-select:none;
+      animation:fadeOut 1.2s forwards;
     }
-    @keyframes fadeOut {
-      0%, 90% { opacity: 1; }
-      100%   { opacity: 0; }
-    }
+    @keyframes fadeOut { 0%,90%{opacity:1} 100%{opacity:0} }
 
-    /* Name-Form & Disclaimer */
     #nameForm {
-      display: none;
-      flex-direction: column;
-      gap: 0.5rem;
-      align-items: center;
+      display:none; flex-direction:column; gap:0.5rem; align-items:center;
     }
     #nameForm input {
-      padding: 0.5rem;
-      border: 1px solid #80b380;
-      border-radius: 0.5rem;
-      width: 80%;
+      padding:0.5rem; border:1px solid #80b380; border-radius:0.5rem; width:80%;
     }
     #nameForm button {
-      padding: 0.5rem 1rem;
-      background: #006600;
-      color: #fff;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
+      padding:0.5rem 1rem; background:#006600; color:#fff;
+      border:none; border-radius:0.5rem; cursor:pointer;
     }
     .disclaimer {
-      font-size: 0.75rem;
-      color: #666;
-      margin-top: 0.5rem;
-      text-align: center;
+      font-size:0.75rem; color:#666; margin-top:0.5rem; text-align:center;
+    }
+    #message { margin-top:0.5rem; font-size:0.9rem; color:#cc0000 }
+    #restartBtn {
+      display:none; margin-top:1rem; padding:0.5rem 1rem;
+      background:#006600; color:#fff; border:none; border-radius:0.5rem; cursor:pointer;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-
     <!-- Countdown -->
     <div class="countdown">
       <h1>Noch bis zu unserer Nikkah</h1>
       <div id="timer">– T –:–:–</div>
-      <div class="label">02. August 2025 · 12:00 Uhr</div>
+      <div class="label">02. August 2025 · 12:00 Uhr</div>
     </div>
 
     <!-- Spiel & Scoreboard -->
     <div class="playground">
-
       <!-- Minigame -->
       <div class="game-section">
         <div class="round-timer">Verbleibend: <span id="roundTimer">50</span>s</div>
         <div class="score">Punkte: <span id="score">0</span></div>
         <div class="game-area" id="gameArea"></div>
+
         <div id="nameForm">
           <div>Spiel vorbei! Gib deinen Namen ein:</div>
           <input type="text" id="nameInput" placeholder="Dein Name">
           <button id="submitBtn">Absenden</button>
           <p class="disclaimer">
-            Mit Absenden erklärst du dich einverstanden, dass deine Name, dein Score
-            sowie Browserinformationen für
-            nicht-kommerzielle Zwecke bis zu 90 Tage gespeichert werden.
+            Mit Absenden erklärst du dich einverstanden, dass Name, Score
+            und Geräteinfos bis zu 90 Tage gespeichert werden.
           </p>
         </div>
+        <div id="message"></div>
+        <button id="restartBtn">Neue Runde starten</button>
       </div>
 
-      <!-- Top 10 Scoreboard -->
+      <!-- Scoreboard -->
       <div class="scoreboard">
         <h2>Top 10</h2>
         <div id="top10">Lade...</div>
+        <p class="prize">
+          Der Gewinner erhält bis zur Nikkah einen kleinen Preis!
+        </p>
       </div>
-
     </div>
   </div>
 
   <script>
-    // === Countdown zur Nikkah ===
+    // Countdown zur Nikkah
     const target = new Date("2025-08-02T12:00:00+02:00");
     const out = document.getElementById("timer");
     function updateCountdown() {
@@ -207,135 +141,136 @@
         clearInterval(cntInterval);
         return;
       }
-      const d = Math.floor(diff / 86400000);
-      let rem = diff % 86400000;
-      const h = String(Math.floor(rem / 3600000)).padStart(2,"0");
-      rem %= 3600000;
-      const m = String(Math.floor(rem / 60000)).padStart(2,"0");
-      rem %= 60000;
-      const s = String(Math.floor(rem / 1000)).padStart(2,"0");
+      const d = Math.floor(diff/86400000),
+            rem = diff%86400000,
+            h = String(Math.floor(rem/3600000)).padStart(2,0),
+            m = String(Math.floor((rem%3600000)/60000)).padStart(2,0),
+            s = String(Math.floor((rem%60000)/1000)).padStart(2,0);
       out.textContent = `${d} T ${h}:${m}:${s}`;
     }
     updateCountdown();
-    const cntInterval = setInterval(updateCountdown, 1000);
+    const cntInterval = setInterval(updateCountdown,1000);
 
-    // === Minigame Logik ===
-    const gameArea     = document.getElementById("gameArea");
-    const scoreEl      = document.getElementById("score");
-    const roundTimerEl = document.getElementById("roundTimer");
-    const nameForm     = document.getElementById("nameForm");
-    const nameInput    = document.getElementById("nameInput");
-    const submitBtn    = document.getElementById("submitBtn");
+    // Minigame
+    const gameArea   = document.getElementById("gameArea"),
+          scoreEl    = document.getElementById("score"),
+          roundTimer = document.getElementById("roundTimer"),
+          nameForm   = document.getElementById("nameForm"),
+          nameInput  = document.getElementById("nameInput"),
+          submitBtn  = document.getElementById("submitBtn"),
+          messageEl  = document.getElementById("message"),
+          restartBtn = document.getElementById("restartBtn");
 
-    let score     = 0;
-    let startTime = Date.now();
-    let gameOver  = false;
-    const ROUND_MS   = 50000;  // 50 Sekunden
-    const HEART_LIFE = 1200;   // 1.2 Sekunden
-    const MAX_HEARTS = 5;
+    let score = 0,
+        start = Date.now(),
+        over  = false;
 
-    // Update Rundentimer
+    const ROUND_MS   = 50000,
+          HEART_LIFE = 1200,
+          MAX_HEARTS = 5;
+
     function updateRoundTimer() {
-      const elapsed = Date.now() - startTime;
-      const left    = Math.max(0, Math.ceil((ROUND_MS - elapsed)/1000));
-      roundTimerEl.textContent = left;
-      if (!gameOver) setTimeout(updateRoundTimer, 250);
-    }
-
-    function getClientInfo() {
-      return {
-        userAgent: navigator.userAgent,
-        platform:  navigator.platform,
-        language:  navigator.language,
-        screen:    `${screen.width}x${screen.height}`
-      };
+      const left = Math.max(0, Math.ceil((ROUND_MS - (Date.now()-start))/1000));
+      roundTimer.textContent = left;
+      if (!over) setTimeout(updateRoundTimer,250);
     }
 
     function getHeartCount() {
-      const elapsedMin = (Date.now() - startTime)/60000;
-      const byScore    = Math.floor(score/30);
-      const byTime     = Math.floor(elapsedMin*6);
+      const elapsedMin = (Date.now()-start)/60000;
+      const byScore    = Math.floor(score/30),
+            byTime     = Math.floor(elapsedMin*6);
       return Math.min(1 + byScore + byTime, MAX_HEARTS);
     }
 
     function spawnWave() {
-      if (gameOver) return;
-      const count   = getHeartCount();
-      let pending   = count;
-      for (let i=0; i<count; i++) {
+      if (over) return;
+      let count = getHeartCount(), pending = count;
+      for (let i=0;i<count;i++){
         const heart = document.createElement("div");
-        heart.className = "heart";
-        heart.textContent = "❤️";
+        heart.className="heart"; heart.textContent="❤️";
         const w = gameArea.clientWidth, h = gameArea.clientHeight;
         heart.style.left = Math.random()*(w-40)+"px";
         heart.style.top  = Math.random()*(h-40)+"px";
         gameArea.appendChild(heart);
 
-        heart.addEventListener("click", () => {
-          score++;
-          scoreEl.textContent = score;
-          heart.remove();
-          pending--;
-          if (pending === 0) spawnWave();
-        });
-
-        setTimeout(() => {
-          if (heart.parentNode) {
-            heart.remove();
-            pending--;
-            if (pending === 0) spawnWave();
-          }
+        heart.onclick = ()=>{
+          score++; scoreEl.textContent = score;
+          heart.remove(); pending--, pending===0 && spawnWave();
+        };
+        setTimeout(()=>{
+          heart.remove(); pending--, pending===0 && spawnWave();
         }, HEART_LIFE);
       }
     }
 
-    // Spiel beenden nach 50s
-    setTimeout(() => {
-      gameOver = true;
-      document.querySelectorAll(".heart").forEach(h => h.remove());
+    // Ende der Runde
+    setTimeout(()=>{
+      over = true;
+      document.querySelectorAll(".heart").forEach(h=>h.remove());
       nameForm.style.display = "flex";
     }, ROUND_MS);
 
-    // Start
     updateRoundTimer();
     spawnWave();
 
-    // === Score Submission & Top10 ===
-    async function submitScore(data) {
-      await db.collection("scores").add(data);
+    // Highscore-Logik
+    async function submitOrUpdate(name, score, meta) {
+      // suche nach bestehendem
+      const col = db.collection("scores"),
+            q   = col.where("name","==",name),
+            snap= await q.get();
+      if (!snap.empty) {
+        const doc = snap.docs[0], data = doc.data();
+        if (score > data.score) {
+          await doc.ref.update({ score, ...meta, ts: firebase.firestore.FieldValue.serverTimestamp() });
+          return true;
+        }
+        return false;
+      } else {
+        await col.add({ name, score, ...meta, ts: firebase.firestore.FieldValue.serverTimestamp() });
+        return true;
+      }
     }
+
     async function loadTop10() {
-      const snapshot = await db.collection("scores")
-        .orderBy("score", "desc")
-        .limit(10)
-        .get();
-      const list = snapshot.docs.map(d => d.data());
+      const snap = await db.collection("scores")
+                           .orderBy("score","desc")
+                           .limit(10).get();
+      const list = snap.docs.map(d=>d.data());
       document.getElementById("top10").innerHTML =
-        list.map((d,i) => `<div>${i+1}. ${d.name}: ${d.score}</div>`).join("");
+        list.map((d,i)=>`<div>${i+1}. ${d.name}: ${d.score}</div>`).join("");
+      return list;
     }
 
-    submitBtn.addEventListener("click", async () => {
+    submitBtn.onclick = async ()=>{
       submitBtn.disabled = true;
-      // Sammle Client‑Infos
-      const info = getClientInfo();
-      // Hole IP & Geo
-      const geo = await fetch("https://ipapi.co/json").then(r=>r.json()).catch(()=>({}));
-      const data = {
-        name: nameInput.value.trim() || "Anonym",
-        score,
-        info,
-        ip:      geo.ip,
-        country: geo.country,
-        region:  geo.region,
-        city:    geo.city,
-        ts:      firebase.firestore.FieldValue.serverTimestamp()
+      const name = nameInput.value.trim()||"Anonym";
+      // Metadaten
+      const meta = {
+        info: {
+          ua: navigator.userAgent,
+          plat: navigator.platform,
+          lang: navigator.language,
+          scr: `${screen.width}x${screen.height}`
+        }
       };
-      await submitScore(data);
-      await loadTop10();
-    });
+      // IP/Geo
+      const geo = await fetch("https://ipapi.co/json").then(r=>r.json()).catch(()=>({}));
+      Object.assign(meta, { ip:geo.ip, country:geo.country });
+      // submit/update
+      const updated = await submitOrUpdate(name, score, meta);
+      const top = await loadTop10();
+      if (!updated) {
+        messageEl.textContent = "Du hattest schon einen höheren Score – nicht geupdated.";
+      } else if (top.length>=10 && !top.some(d=>d.name===name)) {
+        messageEl.textContent = "Schade, das reicht nicht für die Top 10.";
+      } else {
+        messageEl.textContent = "Glückwunsch – dein Score ist jetzt im Top 10!";
+      }
+      restartBtn.style.display = "inline-block";
+    };
 
-    // Lade anfänglich Top10
-    loadTop10();
+    restartBtn.onclick = ()=>location.reload();
   </script>
 </body>
 </html>
