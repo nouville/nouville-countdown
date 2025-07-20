@@ -232,16 +232,35 @@
       }
     }
 
-    async function loadTop10() {
-      const snap = await db.collection("scores")
-                           .orderBy("score","desc")
-                           .limit(10).get();
-      const list = snap.docs.map(d=>d.data());
-      document.getElementById("top10").innerHTML =
-        list.map((d,i)=>`<div>${i+1}. ${d.name}: ${d.score}</div>`).join("");
-      return list;
+async function loadTop10() {
+  const el = document.getElementById("top10");
+  try {
+    const snap = await db.collection("scores")
+                         .orderBy("score","desc")
+                         .limit(10)
+                         .get();
+    if (snap.empty) {
+      el.textContent = "Noch keine Einträge";
+      return [];
     }
+    const list = snap.docs.map(d => d.data());
+    el.innerHTML = list
+      .map((d,i) => `<div>${i+1}. ${d.name}: ${d.score}</div>`)
+      .join("");
+    return list;
+  } catch (err) {
+    console.error("Fehler beim Laden der Top10:", err);
+    el.textContent = "Fehler beim Laden";
+    return [];
+  }
+}
 
+// aufrufen, sobald das DOM fertig ist
+window.addEventListener("DOMContentLoaded", loadTop10);
+
+
+
+  
     submitBtn.onclick = async ()=>{
       submitBtn.disabled = true;
       const name = nameInput.value.trim()||"Anonym";
@@ -260,6 +279,7 @@
       // submit/update
       const updated = await submitOrUpdate(name, score, meta);
       const top = await loadTop10();
+
       if (!updated) {
         messageEl.textContent = "Du hattest schon einen höheren Score – nicht geupdated.";
       } else if (top.length>=10 && !top.some(d=>d.name===name)) {
