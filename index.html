@@ -100,6 +100,11 @@
       color: #004400;
       margin-bottom: 0.5rem;
     }
+    .game-section .round-timer {
+      font-size: 1rem;
+      color: #006600;
+      margin-bottom: 0.75rem;
+    }
     .game-area {
       position: relative;
       width: 100%;
@@ -115,7 +120,7 @@
       font-size: 2.5rem;
       cursor: pointer;
       user-select: none;
-      animation: fadeOut 1s forwards;
+      animation: fadeOut 1.2s forwards;
     }
     @keyframes fadeOut {
       0%, 90% { opacity: 1; }
@@ -160,6 +165,7 @@
 
       <!-- Minigame -->
       <div class="game-section">
+        <div class="round-timer">Verbleibend: <span id="roundTimer">50</span>s</div>
         <div class="score">Punkte: <span id="score">0</span></div>
         <div class="game-area" id="gameArea"></div>
         <div id="nameForm">
@@ -179,7 +185,7 @@
   </div>
 
   <script>
-    // === Countdown ===
+    // === Countdown zur Nikkah ===
     const target = new Date("2025-08-02T12:00:00+02:00");
     const out = document.getElementById("timer");
     function updateCountdown() {
@@ -202,20 +208,33 @@
     const cntInterval = setInterval(updateCountdown, 1000);
 
     // === Minigame Logik ===
-    const gameArea = document.getElementById("gameArea");
-    const scoreEl = document.getElementById("score");
-    const nameForm = document.getElementById("nameForm");
-    const nameInput = document.getElementById("nameInput");
-    const submitBtn = document.getElementById("submitBtn");
-    let score = 0;
-    let startTime = Date.now();
-    let gameOver = false;
+    const gameArea    = document.getElementById("gameArea");
+    const scoreEl     = document.getElementById("score");
+    const roundTimerEl= document.getElementById("roundTimer");
+    const nameForm    = document.getElementById("nameForm");
+    const nameInput   = document.getElementById("nameInput");
+    const submitBtn   = document.getElementById("submitBtn");
+
+    let score       = 0;
+    let startTime   = Date.now();
+    let gameOver    = false;
+    const ROUND_MS  = 50000;          // 50 Sekunden
+    const HEART_LIFE= 1200;           // 1.2 Sekunden
+    const MAX_HEARTS= 5;
+
+    // Aktualisiere verbleibende Zeit jede Sekunde
+    function updateRoundTimer() {
+      const elapsed = Date.now() - startTime;
+      const left = Math.max(0, Math.ceil((ROUND_MS - elapsed)/1000));
+      roundTimerEl.textContent = left;
+      if (!gameOver) setTimeout(updateRoundTimer, 250);
+    }
 
     function getHeartCount() {
-      const elapsed = (Date.now() - startTime) / 60000; // in Minuten
-      const byScore = Math.floor(score / 30);
-      const byTime  = Math.floor(elapsed * 6);
-      return Math.min(1 + byScore + byTime, 7);
+      const elapsedMin = (Date.now() - startTime)/60000;
+      const byScore = Math.floor(score/30);
+      const byTime  = Math.floor(elapsedMin*6);
+      return Math.min(1 + byScore + byTime, MAX_HEARTS);
     }
 
     function spawnWave() {
@@ -230,35 +249,34 @@
         heart.style.left = Math.random()*(w-40)+"px";
         heart.style.top  = Math.random()*(h-40)+"px";
         gameArea.appendChild(heart);
+
         heart.addEventListener("click", () => {
           score++;
           scoreEl.textContent = score;
           heart.remove();
           pending--;
-          if (pending === 0) {
-            spawnWave();
-          }
+          if (pending === 0) spawnWave();
         });
+
         setTimeout(() => {
           if (heart.parentNode) {
             heart.remove();
             pending--;
             if (pending === 0) spawnWave();
           }
-        }, 1000);
+        }, HEART_LIFE);
       }
     }
 
-    // Spielende nach 60 Sekunden
+    // Spiel beenden nach 50s
     setTimeout(() => {
       gameOver = true;
-      // alle Herzen entfernen
       document.querySelectorAll(".heart").forEach(h => h.remove());
-      // Formular anzeigen
       nameForm.style.display = "flex";
-    }, 60000);
+    }, ROUND_MS);
 
-    // Start erster Wave
+    // Starte Timer & erste Welle
+    updateRoundTimer();
     spawnWave();
 
     // === Score Submission & Top10 ===
@@ -286,7 +304,7 @@
       await loadTop10();
     });
 
-    // Lade anfänglich die Top10 (falls schon Scores da sind)
+    // Lade anfänglich die Top10
     loadTop10();
   </script>
 </body>
