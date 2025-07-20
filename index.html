@@ -1,31 +1,76 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf‑8" />
-  <title>Countdown zu [EVENT]</title>
+  <meta charset="utf-8">
+  <title>Countdown zu unserer Nikkah</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#111;color:#fff}
-    h1{font-size:4rem;text-align:center}
-    #timer{font-size:3rem;letter-spacing:.1em}
+    /* Reset & Basis */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      color: #333;
+      font-family: system-ui, sans-serif;
+      text-align: center;
+    }
+    /* Container */
+    .countdown {
+      max-width: 90%;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5em;
+      font-weight: 400;
+    }
+    #timer {
+      font-size: 3rem;
+      letter-spacing: 0.05em;
+    }
+    @media (min-width: 600px) {
+      h1 { font-size: 2.5rem; }
+      #timer { font-size: 4rem; }
+    }
   </style>
 </head>
 <body>
-  <div>
-    <h1>Noch</h1>
-    <div id="timer">00 T 00 h 00 m 00 s</div>
+  <div class="countdown">
+    <h1>Noch bis zu unserer Nikkah</h1>
+    <div id="timer">– Tage –:–:–</div>
   </div>
+
   <script>
-    const target = new Date("2025-12-31T23:59:59+01:00");
+    // Zielzeit: 02.08.2025 12:00 Uhr CEST (UTC+2)
+    const target = new Date("2025-08-02T12:00:00+02:00");
     const out = document.getElementById("timer");
-    setInterval(()=>{
-      const diff = target - new Date();
-      if(diff<=0){ out.textContent = "0 Tage – los geht’s!"; return; }
-      const s=Math.floor(diff/1e3)%60,
-            m=Math.floor(diff/6e4)%60,
-            h=Math.floor(diff/3.6e6)%24,
-            d=Math.floor(diff/8.64e7);
-      out.textContent = `${d} T ${h.toString().padStart(2,"0")} h ${m.toString().padStart(2,"0")} m ${s.toString().padStart(2,"0")} s`;
-    },1000);
+
+    function updateCountdown() {
+      const now = new Date();
+      let diff = target - now;
+
+      if (diff <= 0) {
+        out.textContent = "Das Fest hat begonnen 🎉";
+        clearInterval(interval);
+        return;
+      }
+
+      const days = Math.floor(diff / 86400000);
+      diff %= 86400000;
+      const hours = String(Math.floor(diff / 3600000)).padStart(2, "0");
+      diff %= 3600000;
+      const mins = String(Math.floor(diff / 60000)).padStart(2, "0");
+      diff %= 60000;
+      const secs = String(Math.floor(diff / 1000)).padStart(2, "0");
+
+      out.textContent = `${days} T ${hours}:${mins}:${secs}`;
+    }
+
+    // Erstaufruf + Intervall alle 1 Sekunde
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
   </script>
 </body>
 </html>
